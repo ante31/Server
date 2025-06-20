@@ -36,6 +36,22 @@ cjenikRouter.get('/posebno', async (req, res) => {
   }
 });
 
+cjenikRouter.get('/pice', async (req, res) => {
+  try {
+    const reference = ref(database, `Cjenik/Pice`);
+    const snapshot = await get(reference);
+
+    if (snapshot.exists()) {
+      res.json(snapshot.val());
+    } else {
+      res.status(404).send(`No item found in Cjenik with title: pice`);
+    }
+  } catch (error) {
+    console.error('Error fetching item from Firebase:', error);
+    res.status(500).send('Failed to fetch item from Firebase');
+  }
+});
+
 cjenikRouter.get('/:title', async (req, res) => {
   try {
     const { title } = req.params;
