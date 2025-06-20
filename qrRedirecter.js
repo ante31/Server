@@ -16,7 +16,7 @@ qrRedirecter.get('/', (req, res) => {
   }
 
   // Optional: fallback if not mobile
-  return res.redirect('https://yourwebsite.com');
+  res.send('Unsupported device. Please visit from a mobile device.');
 });
 
 module.exports = qrRedirecter;
