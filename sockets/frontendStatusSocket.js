@@ -10,7 +10,7 @@ function frontendStatusSocket(io) {
 socket.on("frontend-logged-in", (data) => {
   if (!activeFrontend) {
     activeFrontend = { socketId: socket.id };
-    //sendSMS("0958138612", "Frontend je aktivan!", data.timestamp);
+    sendSMS("0958138612", "Frontend je aktivan!", data.timestamp);
     console.log("✅ SMS poslan: frontend je aktivan");
   } else {
     console.log("♻️ Frontend se reconnectao:", socket.id);
@@ -23,7 +23,7 @@ socket.on("frontend-logged-in", (data) => {
     socket.on("frontend-closed", (data) => {
       if (activeFrontend && activeFrontend.socketId === socket.id) {
         activeFrontend = null;
-        //sendSMS("0958138612", "Frontend je zatvoren!", data.timestamp);
+        sendSMS("0958138612", "Frontend je zatvoren!", data.timestamp);
         console.log("✅ SMS poslan: frontend je zatvoren");
       }
     });
