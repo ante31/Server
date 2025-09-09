@@ -2,8 +2,6 @@ const { initializeApp, getApps } = require('firebase/app');
 const { getDatabase } = require('firebase/database');
 require('dotenv').config();
 
-const isTest = true;
-
 const firebaseConfig = {
       apiKey: process.env.FIREBASE_API_KEY,
       authDomain: process.env.FIREBASE_AUTH_DOMAIN,
