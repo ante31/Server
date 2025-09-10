@@ -37,6 +37,7 @@ function frontendStatusSocket(io) {
         activeFrontend.lastHeartbeat = Date.now();
         scheduleTimeout(socket);
         socket.emit("heartbeat-ack", { timestamp: new Date().toISOString() });
+        console.log("💓 Heartbeat primljen od:", socket.id);
       }
     });
 
