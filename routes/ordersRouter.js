@@ -130,7 +130,10 @@ orderRouter.patch('/:orderId', async (req, res) => {
       }
       if (message !== '') {
       // Send the push notification (assumes you have a sendPushNotification function)
-      sendSMS(orderData.phone, "Gricko automatska poruka: "+message);
+      sendSMS(
+        orderData.phone,
+        (lang === 'hr' ? "Gricko automatska poruka: " : "Gricko automatic message: ") + message
+      );
       //await sendPushNotification(pushToken, title, message);
       console.log('Push notification sent to client');
       }
@@ -148,4 +151,5 @@ orderRouter.patch('/:orderId', async (req, res) => {
 
 
 module.exports = orderRouter;
+
 
