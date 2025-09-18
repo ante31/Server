@@ -113,31 +113,28 @@ orderRouter.patch('/:orderId', async (req, res) => {
 
     const orderData = snapshot.val();
     const pushToken = orderData.token;
-    console.log("ORdeRDATA",orderData);
-    if (!pushToken) {
-      console.log('No push token found for this order');
-    } else {
-      // Construct the message based on the status
-      let message = '';
-      const lang = orderData.language;
-      let title = "Gricko";
-      if (status === 'accepted') {
-        message = lang === 'hr' ? 'Vaša narudžba je prihvaćena': `Your order has been accepted.`;
-      } else if (status === 'rejected') {
-        message = lang === 'hr' ? 'Nažalost Vaša narudžba je odbijena': `Unfortunately your order has been rejected.`;
-      } else if (status === 'completed' && !orderData.isDelivery) {
-        message = lang === 'hr' ? 'Vaša narudžba je završena': `Your order has been completed.`;
-      }
-      if (message !== '') {
-      // Send the push notification (assumes you have a sendPushNotification function)
-      sendSMS(
-        orderData.phone,
-        (lang === 'hr' ? "Gricko automatska poruka: " : "Gricko automatic message: ") + message
-      );
-      //await sendPushNotification(pushToken, title, message);
-      console.log('Push notification sent to client');
-      }
+
+    // Construct the message based on the status
+    let message = '';
+    const lang = orderData.language;
+    let title = "Gricko";
+    if (status === 'accepted') {
+      message = lang === 'hr' ? 'Vaša narudžba je prihvaćena': `Your order has been accepted.`;
+    } else if (status === 'rejected') {
+      message = lang === 'hr' ? 'Nažalost Vaša narudžba je odbijena': `Unfortunately your order has been rejected.`;
+    } else if (status === 'completed' && !orderData.isDelivery) {
+      message = lang === 'hr' ? 'Vaša narudžba je završena': `Your order has been completed.`;
     }
+    if (message !== '') {
+    // Send the push notification (assumes you have a sendPushNotification function)
+    if (!pushToken) {
+      sendSMS(orderData.phone, "Gricko automatska poruka: "+message);
+    } else {
+      await sendPushNotification(pushToken, title, message);
+      console.log('Push notification sent to client');
+    }
+  }
+
 
     // Update the status of the order in the database
     await update(reference, { status });
@@ -151,5 +148,3 @@ orderRouter.patch('/:orderId', async (req, res) => {
 
 
 module.exports = orderRouter;
-
-
