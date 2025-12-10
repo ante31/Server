@@ -1,14 +1,20 @@
+//Dostavni mob
 const API_KEY = 'b33eaf4f-979e-4d16-8157-3db5df121891';
 const DEVICE_ID = '68c91767c27bd0d0b9680bd5';
+
+//Moj mob
+const API_KEY_2 = 'f5205634-0d63-41fd-bf1a-8930e9b32ff5';
+const DEVICE_ID_2 = '689c5fe527e637fe5940b3e6';
+
 const BASE_URL = 'https://api.textbee.dev/api/v1';
 
 async function sendSMS(to, message) {
   try {
-    const response = await fetch(`${BASE_URL}/gateway/devices/${DEVICE_ID}/send-sms`, {
+    const response = await fetch(`${BASE_URL}/gateway/devices/${DEVICE_ID_2}/send-sms`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-api-key': API_KEY,
+        'x-api-key': API_KEY_2,
       },
       body: JSON.stringify({
         recipients: [formatPhoneNumber(to)],
