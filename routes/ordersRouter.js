@@ -37,36 +37,6 @@ orderRouter.post('/', async (req, res) => {
     
     await set(newOrderRef, req.body);
 
-    let phone = req.body.phone;
-    let price = req.body.totalPrice;
-
-    // Ažuriranje sekcije "Loyalty" (Bodovi)
-    console.log('Ažuriranje loyalty bodova za telefon:', phone, 'sa cenom:', price);
-    if (phone && price != null) {
-      // Putanja: /Loyalty/phone
-      const loyaltyRef = ref(database, `Loyalty/${phone}`);
-
-      // Koristimo transaction za sigurno dodavanje
-      const result = await runTransaction(loyaltyRef, (currentData) => {
-        // Inicijalizacija objekta ako ne postoji
-        let data = currentData || { points: 0, awards: 0 };
-        
-        // Ažuriranje samo bodova
-        data.points = (data.points || 0) + price;
-        
-        // Polje awards ostavljamo nepromenjeno za sada (može biti null ili 0)
-        data.awards = data.awards || 0; 
-        
-        return data;
-      });
-
-      if (result.committed) {
-        console.log(`Loyalty podaci za telefon ${phone} uspešno ažurirani. Novi bodovi: ${result.snapshot.val().points}`);
-      } else {
-        console.log('Transakcija loyalty bodova nije izvršena.');
-      }
-    }
-
     res.status(201).json({ id: newOrderRef.key });
   } catch (error) {
     console.error('Error creating order:', error);
@@ -177,4 +147,5 @@ orderRouter.patch('/:orderId', async (req, res) => {
 
 
 module.exports = orderRouter;
+
 
