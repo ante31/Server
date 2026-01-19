@@ -7,29 +7,31 @@ const authRouter = express.Router();
 
 authRouter.post('/login/:pass', async (req, res) => {
   try {
-    const { pass } = req.params; // Get the password from the URL parameters
-    console.log("pass", pass);
-
-    // Reference to the password stored in Firebase
-    const reference = ref(database, 'General/pass');
+    const { pass } = req.params;
+    const reference = ref(database, 'General'); // Dohvaćamo cijeli General čvor
     const snapshot = await get(reference);
 
     if (snapshot.exists()) {
-      const storedPass = snapshot.val(); // Get the stored password from Firebase
-      console.log("bcypt",  bcrypt.hashSync(storedPass));
+      const { pass: storedPass, adminPass } = snapshot.val();
 
-      // Compare the provided password with the stored password
-      if (bcrypt.compareSync(pass, storedPass)) {
-        res.status(200).json({ message: 'Login successful' });
-      } else {
-        res.status(401).json({ error: 'Incorrect password' });
+      // 1. Provjera za Admina
+      if (adminPass && bcrypt.compareSync(pass, adminPass)) {
+        console.log('Admin login successful');
+        return res.status(200).json({ message: 'Login successful', role: 'admin' });
       }
+
+      // 2. Provjera za običnog korisnika
+      if (storedPass && bcrypt.compareSync(pass, storedPass)) {
+        console.log('User login successful');
+        return res.status(200).json({ message: 'Login successful', role: 'user' });
+      }
+
+      res.status(401).json({ error: 'Incorrect password' });
     } else {
-      res.status(404).send('No password available in Firebase');
+      res.status(404).send('No passwords available in Firebase');
     }
   } catch (error) {
-    console.error('Error fetching password from Firebase:', error);
-    res.status(500).send('Failed to fetch password from Firebase');
+    res.status(500).send('Internal server error');
   }
 });
 
