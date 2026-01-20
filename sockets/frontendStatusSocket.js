@@ -33,11 +33,17 @@ function frontendStatusSocket(io) {
     });
 
     socket.on("heartbeat", (data) => {
-      if (activeFrontend && activeFrontend.socketId === socket.id) {
+      // Makni strogi check 'activeFrontend &&' kako bi heartbeat mogao raditi i nakon restarta servera
+      if (!activeFrontend) {
+        activeFrontend = { socketId: socket.id, lastHeartbeat: Date.now(), timeoutHandle: null };
+        console.log("Heartbeat re-aktivirao activeFrontend nakon restarta");
+      }
+    
+      if (activeFrontend.socketId === socket.id) {
         activeFrontend.lastHeartbeat = Date.now();
         scheduleTimeout(socket);
         socket.emit("heartbeat-ack", { timestamp: new Date().toISOString() });
-        console.log("💓 Heartbeat primljen od:", socket.id);
+        console.log("Heartbeat primljen od:", socket.id);
       }
     });
 
