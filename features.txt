@@ -1,0 +1,37 @@
+- Mobilna aplikacija
+    - Pregled svih kategorija te posebnih ponuda
+    - Sustav za odabir jednog ili više besplatnih pića kod posebne ponude
+    - Pregled svih proizvoda po kategorijama
+    - Sustav sortiranja proizvoda prema njihovoj popularnosti
+    - Odabir veličine i priloga za proizvod
+    - Sustav za dodatno naplačivanje svakog pojedinog priloga poviše limita besplatnih priloga
+    - Dodavanje proizvoda u košaricu
+    - Uređivanje proizvoda u košarici (količina, veličina, prilozi te uklanjanje)
+    - Objavljivanje na google play i na App Store
+    - Sustav neradnih i skraćenih radnih dana
+    - Sustav za praćenje dnevnog radnog vremena
+    - Posebno radno vrijeme za preuzimanje i za dostavu
+    - Mogućnost naručivanja u određenu uru
+    - Mogućnost naručivanja prije radnog vremena (unaprijed)
+    - Automatsko prilagođavanje jezika (en / hr)
+    - Pohrana prethodnih narudžbi lokalno u mobitelu te njihova enkripcija
+    - Opcija ponavljanja prethodne narudžbe
+    - Pregled statusa narudžbe
+    - Expo-location geolokacija (lat, long) te njeno geodekodiranje za automatsko unošenje adrese
+    - Automatsko unošenje dostavne zone na temelju prethodno dobivene adrese
+    - Posebni uvjeti iznosa minimalne narudžbe ovisno o prethono dobivenoj zoni dostave
+    - Pametni QR kod - na temelju sustava mobitela jedan kod preusmjerava i na Google play i na App store
+
+- React aplikacija za primanje narudžbi
+    - Dohvaćanje narudžbi preko fetch-a i preko socket-a
+    - Zvučna obavijest za nove narudžbe
+    - Prihvaćanje i odbijanje narudžbi 
+    - Slanje expo-notification obavijesti na aplikaciju na mobitelu koristeći Google Firebase messaging
+    - Ukoliko korisnik nije prihvatio obavijesti slanje SMS poruke sa statusom narudžbe
+    - Dodavanje brojeva mobitela na “crnu listu” te upravljanje istom
+    - Promjena očekivanog vremena za preuzimanje i za dostavu koji se automatski mijenja u klijentskoj aplikaciji
+
+
+- Server u nodejs-u
+    - Express.js, API rute, socketi
+    - Slanje SMS-a meni za svaku prijavu, gašenje i za svaki nestanak interneta duži od 3 minute

@@ -5,11 +5,10 @@ function generalSocket(io, database) {
 
   const generalRef = ref(database, 'General');
 
+
   onValue(generalRef, (snapshot) => {
-    const data = snapshot.val();
-    currentGeneralData = data;
-    console.log('🔥 Firebase → General updated:', data);
-    io.emit('general-update', data);
+    const currentGeneralData = snapshot.val();
+    io.emit('general-update', currentGeneralData);
   });
 
   io.on('connection', (socket) => {

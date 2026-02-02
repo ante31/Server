@@ -127,7 +127,7 @@ cjenikRouter.put('/:title/:id', async (req, res) => {
 
 cjenikRouter.post('/updatePopularity', async (req, res) => {
   const meals = req.body; // Don't destructure, just take it as an array
-  //console.log('Updating popularity for:', meals);
+
   try {
     const reference = ref(database, 'Cjenik');
     const snapshot = await get(reference);
@@ -138,16 +138,20 @@ cjenikRouter.post('/updatePopularity', async (req, res) => {
 
     const categories = snapshot.val();
 
+    console.log("Categories fetched:", Object.keys(categories));
+
+    console.log("Meals to update popularity for:", meals);
+
     for (const meal of meals) {
       for (const category in categories) {
         if (category === 'Prilozi') continue;
         for (const id in categories[category]) {
+          console.log(`Comparing meal id ${meal.id} with database id ${id}`);
           if (id === meal.id) {
-            console.log(`Found meal with ID: ${id} in category: ${category}`);
             const mealRef = ref(database, `Cjenik/${category}/${id}`);
-            console.log(`Meal reference: ${mealRef}`);
-            console.log(`Current popularity: ${categories[category][id].popularity}`);
-            //increment popularity
+
+            console.log(`Current popularity for ${meal.name}: ${categories[category][id].popularity}`); 
+
             await update(mealRef, { popularity: categories[category][id].popularity + 1 });
             console.log(`Updated popularity from ${categories[category][id].popularity} to ${categories[category][id].popularity + 1} for ${meal.name}`);
             break;

@@ -13,12 +13,12 @@ function ordersSocket(io, database) {
     const ordersPath = `Orders/${year}/${month}/${day}`;
     const ordersRef = ref(database, ordersPath);
 
-    console.log('Slušam na pathu:', ordersPath);
+    console.log('path:', ordersPath);
 
     listener = onChildAdded(ordersRef, (snapshot) => {
       const newOrder = snapshot.val();
       const orderId = snapshot.key;
-      console.log('Firebase → Nova narudžba dodana:', orderId, newOrder);
+      console.log('Firebase - Nova narudžba dodana:', orderId, newOrder);
       io.emit('order-added', { id: orderId, ...newOrder });
     });
 
@@ -26,7 +26,7 @@ function ordersSocket(io, database) {
       const updatedOrder = snapshot.val();
       const orderId = snapshot.key;
       if (updatedOrder.status) {
-        console.log('Firebase → Status narudžbe promijenjen:', orderId, updatedOrder.status);
+        console.log('Firebase - Status narudžbe promijenjen:', orderId, updatedOrder.status);
         io.emit(`order-updated-${orderId}`, { id: orderId, ...updatedOrder });
       }
     });

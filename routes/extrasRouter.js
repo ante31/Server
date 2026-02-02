@@ -4,6 +4,7 @@ const database = require('../dbConnect');
 
 const extrasRouter = express.Router();
 
+// Dohvati apsolutno sve priloge
 extrasRouter.get('/', async (req, res) => {
   try {
     const reference = ref(database, 'Cjenik/Prilozi');
@@ -20,6 +21,7 @@ extrasRouter.get('/', async (req, res) => {
   }
 });
 
+// Dohvati sve priloge na temelju priloziName
 extrasRouter.get('/:priloziName', async (req, res) => {
   try {
     const { priloziName } = req.params; // Dohvati parametar priloziName iz query stringa
@@ -29,7 +31,6 @@ extrasRouter.get('/:priloziName', async (req, res) => {
       return res.status(400).send('Prilozi name is required');
     }
 
-    // Dohvati podatke iz baze na temelju priloziName
     const reference = ref(database, `Cjenik/Prilozi/${priloziName}`);
     const snapshot = await get(reference);
 
@@ -117,7 +118,7 @@ extrasRouter.delete('/:categoryName/:extraKey', async (req, res) => {
 extrasRouter.post('/:categoryName', async (req, res) => {
   try {
       const { categoryName } = req.params;
-      const { name, nameEn, price } = req.body;  // assuming extra data is in the request body
+      const { name, nameEn, price } = req.body; 
 
       if (!categoryName || !name || !nameEn || !price) {
           return res.status(400).send('Svi podaci su obavezni.');
@@ -129,7 +130,6 @@ extrasRouter.post('/:categoryName', async (req, res) => {
       const existingData = snapshot.val() || {};
       const extraKey = `${name}|${nameEn}`;
 
-      // Store extra as "croatian|english[price]"
       existingData[extraKey] = price;
 
       await set(reference, existingData);
@@ -146,18 +146,10 @@ extrasRouter.put('/:categoryName/:extraKey', async (req, res) => {
     const { categoryName, extraKey } = req.params;
     const { name_hr, name_en, price } = req.body;
 
-    console.log("🔍 DEBUG: Primljeni parametri", req.params);
-    console.log("🔍 DEBUG: Primljeni podaci", req.body);
-
-
-    // Firebase referenca
     const reference = ref(database, `Cjenik/Prilozi/${categoryName}`);
-    console.log("🔍 DEBUG: Firebase reference path", reference);
 
     const snapshot = await get(reference);
     const existingData = snapshot.val();
-
-    console.log("🔍 DEBUG: Postojeći podaci u kategoriji", existingData);
 
     // Provjera postojanja ključa
     const normalizedExtraKey = extraKey.trim().toLowerCase();
@@ -165,11 +157,8 @@ extrasRouter.put('/:categoryName/:extraKey', async (req, res) => {
     const normalizedExistingKey = existingKeys.find(key => key.toLowerCase().trim() === normalizedExtraKey);
 
     if (!normalizedExistingKey) {
-      console.error("❌ ERROR: Prilog '%s' nije pronađen u kategoriji '%s'", extraKey, categoryName);
       return res.status(404).send(`Prilog '${extraKey}' nije pronađen u kategoriji '${categoryName}'`);
     }
-
-    console.log("🔍 DEBUG: Pronađen ključ:", normalizedExistingKey);
 
     // Normalizacija novog ključa
     const newKey = `${name_hr}|${name_en}`;
@@ -179,7 +168,6 @@ extrasRouter.put('/:categoryName/:extraKey', async (req, res) => {
 
     // Ažuriranje sa novim ključem
     existingData[newKey] = price;
-    console.log("🔍 DEBUG: Ažurirani podaci", existingData);
 
     await set(reference, existingData);
 

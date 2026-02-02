@@ -1,5 +1,5 @@
 const express = require('express');
-const { ref, get, push, set, update } = require('firebase/database');
+const { ref, get, push, set, update, runTransaction } = require('firebase/database');
 const database = require('../dbConnect');
 const { sendPushNotification } = require('../services/sendPushNotification');
 const { sendSMS } = require('../services/sendSMS');
@@ -70,7 +70,6 @@ orderRouter.get('/:year/:month/:day', async (req, res) => {
   try {
     const { year, month, day } = req.params;
     console.log(year, month, day);
-    console.log(`Fetching orders for ${year}-${month}-${day}`);
 
     const reference = ref(database, `Orders/${year}/${month}/${day}`);
     const snapshot = await get(reference);
@@ -92,8 +91,8 @@ orderRouter.get('/:year/:month/:day', async (req, res) => {
 // PATCH endpoint to update order status
 orderRouter.patch('/:orderId', async (req, res) => {
   try {
-    const { orderId } = req.params; // Extract orderId from the URL
-    const { status, year, month, day } = req.body; // Extract new status from the body (accepted or rejected)
+    const { orderId } = req.params;
+    const { status, year, month, day } = req.body; 
     
     console.log(`Updating order ${orderId} status to ${status}`);
     console.log(year, month, day);
@@ -114,7 +113,32 @@ orderRouter.patch('/:orderId', async (req, res) => {
     const orderData = snapshot.val();
     const pushToken = orderData.token;
 
-    // Construct the message based on the status
+    let phone = orderData.phone;
+    let price = orderData.totalPrice;
+
+    // 2. Ažuriranje loyalty-a
+    console.log('Ažuriranje loyalty bodova za telefon:', phone, 'sa cijenom:', price);
+    if (phone && price != null) {
+      const loyaltyRef = ref(database, `Loyalty/${phone}`);
+
+      const result = await runTransaction(loyaltyRef, (currentData) => {
+        let data = currentData || { points: 0, awards: 0 };
+        
+        data.points = (data.points || 0) + price;
+        
+        data.awards = data.awards || 0; 
+        
+        return data;
+      });
+
+      if (result.committed) {
+        console.log(`Loyalty podaci za telefon ${phone} uspešno ažurirani. Novi bodovi: ${result.snapshot.val().points}`);
+      } else {
+        console.log('Transakcija loyalty bodova nije izvršena.');
+      }
+    }
+
+    // Konstruiranje poruke
     let message = '';
     const lang = orderData.language;
     let title = "Gricko";
@@ -126,7 +150,6 @@ orderRouter.patch('/:orderId', async (req, res) => {
       message = lang === 'hr' ? 'Vaša narudžba je završena': `Your order has been completed.`;
     }
     if (message !== '') {
-    // Send the push notification (assumes you have a sendPushNotification function)
     if (!pushToken) {
       sendSMS(orderData.phone, "Gricko automatska poruka: "+message);
     } else {
@@ -145,6 +168,9 @@ orderRouter.patch('/:orderId', async (req, res) => {
     res.status(500).send('Failed to update order status');
   }
 });
+
+// Zapamtite: I dalje morate implementirati logiku smanjenja bodova u POST /orders ruti (handleFinalSubmission)
+// ako klijent pošalje useAward: true.
 
 
 module.exports = orderRouter;

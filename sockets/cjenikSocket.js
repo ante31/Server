@@ -1,7 +1,6 @@
 const { ref, onValue, get } = require('firebase/database');
 
 function cjenikSocket(io, database) {
-  console.log('🚀 cjenikSocket pokrenut...');
 
   const cjenikRef = ref(database, 'Cjenik');
   const previousStates = {}; // čuvamo zadnje stanje
@@ -9,7 +8,7 @@ function cjenikSocket(io, database) {
   get(cjenikRef)
     .then((snapshot) => {
       if (!snapshot.exists()) {
-        console.log('❌ Nema Cjenika u bazi.');
+        console.log('Nema Cjenika u bazi.');
         return;
       }
 
@@ -20,7 +19,6 @@ function cjenikSocket(io, database) {
 
       for (const category of categoryKeys) {
         const categoryRef = ref(database, `Cjenik/${category}`);
-        console.log(`Slušam promjene na: Cjenik/${category}`);
 
         onValue(categoryRef, (snapshot) => {
           const newData = snapshot.val() || {};
@@ -33,10 +31,10 @@ function cjenikSocket(io, database) {
 
           if (hasChanges) {
             previousStates[category] = newData; // spremamo novo pravo stanje (s popularity)
-            // console.log(`📤 [Socket] Promjena za "${category}"`, newData);
+            // console.log(`[Socket] Promjena za "${category}"`, newData);
             io.emit(`cjenik-update-${category}`, newData);
           } else {
-            console.log(`⏸️ [Socket] Promjena "${category}" samo u popularity — ignoriram.`);
+            console.log(`⏸[Socket] Promjena "${category}" samo u popularity — ignoriram.`);
           }
         });
       }

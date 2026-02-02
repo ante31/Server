@@ -15,7 +15,6 @@ generalRouter.get('/', async (req, res) => {
       res.status(404).send('No general available in Firebase');
     }
   } catch (error) {
-    console.error('Error fetching general from Firebase:', error);
     res.status(500).send('Failed to fetch general from Firebase');
   }
 });

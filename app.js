@@ -9,7 +9,6 @@ const database = require('./dbConnect');
 
 // Sockets
 const generalSocket = require('./sockets/generalSocket');
-const cjenikSocket = require('./sockets/cjenikSocket');
 const ordersSocket = require('./sockets/ordersSocket');
 const frontendStatusSocket = require('./sockets/frontendStatusSocket');
 
@@ -21,10 +20,13 @@ const generalRouter = require('./routes/generalRouter');
 const extrasRouter = require('./routes/extrasRouter');
 const authRouter = require('./routes/authRouter');
 const annotationsRouter = require('./routes/annotationsRouter');
+const loyaltyRouter = require('./routes/loyaltyRouter');
 const qrRedirecter = require('./qrRedirecter');
 
-// Express + socket.io setup
+// Express
 const app = express();
+
+// Socket
 const http = require('http');
 const server = http.createServer(app);
 
@@ -34,12 +36,8 @@ const io = new Server(server, {
     origin: '*',
     methods: ['GET', 'POST'],
   },
-  transports: ['websocket'], // dodaj ovo ako frontend to traži
+  transports: ['websocket'],
 });
-
-
-const port = process.env.PORT || 3000;
-const localhost = "localhost";
 
 // Middleware
 app.use(bodyParser.json());
@@ -52,7 +50,7 @@ app.use(cors({
 
 // Test ruta
 app.get('/', (req, res) => {
-  res.send('Hello from the server side!');
+  res.send('Hello World!');
 });
 
 // API rute
@@ -63,14 +61,16 @@ app.use('/general', generalRouter);
 app.use('/extras', extrasRouter);
 app.use('/auth', authRouter);
 app.use('/annotations', annotationsRouter);
+app.use('/loyalty', loyaltyRouter);
 
 
 generalSocket(io, database);
 ordersSocket(io, database);
-cjenikSocket(io, database);
 frontendStatusSocket(io, database);
 
 // Pokretanje servera
+const port = process.env.PORT || 3000;
+const localhost = "localhost";
 server.listen(port, () => {
   console.log(`🚀 Server is running on http://${localhost}:${port}`);
 });
