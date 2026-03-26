@@ -143,11 +143,13 @@ cjenikRouter.post('/updatePopularity', async (req, res) => {
     console.log("Meals to update popularity for:", meals);
 
     for (const meal of meals) {
+      const mealId = meal.id.match(/^ID\d+/)?.[0];
+
       for (const category in categories) {
         if (category === 'Prilozi') continue;
         for (const id in categories[category]) {
-          console.log(`Comparing meal id ${meal.id} with database id ${id}`);
-          if (id === meal.id) {
+          console.log(`Comparing meal id ${mealId} with database id ${id}`);
+          if (id === mealId) {
             const mealRef = ref(database, `Cjenik/${category}/${id}`);
 
             console.log(`Current popularity for ${meal.name}: ${categories[category][id].popularity}`); 

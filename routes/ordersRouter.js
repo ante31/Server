@@ -88,7 +88,6 @@ orderRouter.get('/:year/:month/:day', async (req, res) => {
 });
 
 
-// PATCH endpoint to update order status
 orderRouter.patch('/:orderId', async (req, res) => {
   try {
     const { orderId } = req.params;
@@ -100,10 +99,8 @@ orderRouter.patch('/:orderId', async (req, res) => {
       return res.status(400).send('Invalid status. Please provide "accepted" or "rejected"');
     }
 
-    // Find the path where this order exists
     const reference = ref(database, `Orders/${year}/${month}/${day}/${orderId}`);
 
-    // Fetch current order data to check if it exists
     const snapshot = await get(reference);
     
     if (!snapshot.exists()) {
@@ -112,7 +109,6 @@ orderRouter.patch('/:orderId', async (req, res) => {
 
     const orderData = snapshot.val();
     const pushToken = orderData.token;
-
     let phone = orderData.phone;
     let price = orderData.totalPrice;
 
@@ -122,9 +118,9 @@ orderRouter.patch('/:orderId', async (req, res) => {
       const loyaltyRef = ref(database, `Loyalty/${phone}`);
 
       const result = await runTransaction(loyaltyRef, (currentData) => {
-        let data = currentData || { points: 0, awards: 0 };
+        let data = currentData || { loyalty_points: 0, awards: 0 };
         
-        data.points = (data.points || 0) + price;
+        data.loyalty_points = (data.loyalty_points || 0) + price;
         
         data.awards = data.awards || 0; 
         
