@@ -25,21 +25,28 @@ const qrRedirecter = require('./qrRedirecter');
 
 // Express
 const app = express();
-
-// Socket
 const http = require('http');
 const server = http.createServer(app);
 
 const { Server } = require('socket.io');
 const io = new Server(server, {
   cors: {
-    origin: '*',
-    methods: ['GET', 'POST'],
+    origin: '*', // Dopušta apsolutno sve
+    methods: ['GET', 'POST']
+    // credentials: true -> OVO SMO IZBACILI
   },
-  transports: ['websocket'],
+  allowEIO3: true,
+  transports: ['polling', 'websocket'] 
 });
 
 // Middleware
+app.use(cors({
+  origin: '*', // Dopušta apsolutno sve za fetch/axios
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+  // credentials: true -> OVO SMO IZBACILI
+}));
+
 app.use(bodyParser.json());
 app.use(express.json());
 app.use(cors({
@@ -68,9 +75,9 @@ generalSocket(io, database);
 ordersSocket(io, database);
 frontendStatusSocket(io, database);
 
-// Pokretanje servera
-const port = process.env.PORT || 3000;
-const localhost = "localhost";
-server.listen(port, () => {
-  console.log(`🚀 Server is running on http://${localhost}:${port}`);
+const PORT = process.env.PORT || 3000;
+
+// OBAVEZNO "0.0.0.0" - bez toga Railway ne propušta vanjski promet
+server.listen(PORT, "0.0.0.0", () => {
+  console.log(`🚀 Server is back online on port ${PORT}`);
 });
