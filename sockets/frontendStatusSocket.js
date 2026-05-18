@@ -2,7 +2,7 @@ const { sendSMS } = require("../services/sendSMS");
 
 function frontendStatusSocket(io) {
   let activeFrontend = null; 
-  const HEARTBEAT_TIMEOUT = 3 * 60 * 1000;
+  const HEARTBEAT_TIMEOUT = 7 * 60 * 1000;
 
   const scheduleTimeout = (socket) => {
     if (!activeFrontend || activeFrontend.socketId !== socket.id) return;
