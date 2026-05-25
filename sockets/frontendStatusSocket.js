@@ -1,85 +1,93 @@
 const { sendSMS } = require("../services/sendSMS");
 
 function frontendStatusSocket(io) {
-  let activeFrontend = null; 
+  let activeFrontend = null;
+
   const HEARTBEAT_TIMEOUT = 7 * 60 * 1000;
 
-const scheduleTimeout = (socket) => {
-  if (!activeFrontend || activeFrontend.socketId !== socket.id) return;
+  const scheduleTimeout = (socket) => {
+    if (!activeFrontend) return;
 
-  if (activeFrontend.timeoutHandle) {
-    clearTimeout(activeFrontend.timeoutHandle);
-  }
-
-  const timeoutVersion = Date.now();
-  activeFrontend.timeoutVersion = timeoutVersion;
-
-  activeFrontend.timeoutHandle = setTimeout(() => {
-
-    // Ignore stale timers
-    if (
-      !activeFrontend ||
-      activeFrontend.socketId !== socket.id ||
-      activeFrontend.timeoutVersion !== timeoutVersion
-    ) {
-      return;
+    if (activeFrontend.timeoutHandle) {
+      clearTimeout(activeFrontend.timeoutHandle);
     }
 
-    console.log("Frontend nestao:", socket.id);
+    const timeoutVersion = Date.now();
+    activeFrontend.timeoutVersion = timeoutVersion;
 
-    sendSMS(
-      "0958138612",
-      "Frontend je nestao (heartbeat timeout)!",
-      new Date().toISOString()
-    );
+    activeFrontend.timeoutHandle = setTimeout(() => {
+      if (
+        !activeFrontend ||
+        activeFrontend.timeoutVersion !== timeoutVersion
+      ) {
+        return;
+      }
 
-    activeFrontend = null;
+      sendSMS(
+        "0958138612",
+        "Frontend je nestao (heartbeat timeout)!",
+        new Date().toISOString()
+      );
 
-  }, HEARTBEAT_TIMEOUT);
-};
+      activeFrontend = null;
+    }, HEARTBEAT_TIMEOUT);
+  };
 
   io.on("connection", (socket) => {
     socket.on("frontend-logged-in", (data) => {
       if (data.isAdmin) return;
 
-      if (!activeFrontend) {
-        activeFrontend = { socketId: socket.id, lastHeartbeat: Date.now(), timeoutHandle: null };
-        sendSMS("0958138612", "Frontend je aktivan!", data.timestamp);
-      } else {
-        activeFrontend.socketId = socket.id;
-        activeFrontend.lastHeartbeat = Date.now();
+      const wasOffline = !activeFrontend;
+
+      activeFrontend = {
+        socketId: socket.id,
+        lastHeartbeat: Date.now(),
+      };
+
+      if (wasOffline) {
+        sendSMS(
+          "0958138612",
+          "Frontend je aktivan!",
+          data.timestamp
+        );
       }
+
       scheduleTimeout(socket);
     });
 
     socket.on("heartbeat", (data) => {
       if (data.isAdmin) return;
 
-      console.log(`💓 HEARTBEAT ${new Date()}`);
+      activeFrontend = {
+        socketId: socket.id,
+        lastHeartbeat: Date.now(),
+      };
 
-      if (!activeFrontend) {
-        activeFrontend = { socketId: socket.id, lastHeartbeat: Date.now(), timeoutHandle: null };
-      }
+      scheduleTimeout(socket);
 
-      if (activeFrontend.socketId === socket.id) {
-        activeFrontend.lastHeartbeat = Date.now();
-        scheduleTimeout(socket);
-        socket.emit("heartbeat-ack", { timestamp: new Date().toISOString() });
-      }
+      socket.emit("heartbeat-ack", {
+        timestamp: new Date().toISOString(),
+      });
     });
 
     socket.on("frontend-closed", (data) => {
       if (data.isAdmin) return;
 
-      if (activeFrontend && activeFrontend.socketId === socket.id) {
-        if (activeFrontend.timeoutHandle) clearTimeout(activeFrontend.timeoutHandle);
-        activeFrontend = null;
-        sendSMS("0958138612", "Frontend je zatvoren!", data.timestamp);
+      if (activeFrontend?.timeoutHandle) {
+        clearTimeout(activeFrontend.timeoutHandle);
       }
+
+      activeFrontend = null;
+
+      sendSMS(
+        "0958138612",
+        "Frontend je zatvoren!",
+        data.timestamp
+      );
     });
 
-    socket.on("disconnect", (reason) => {
-      // Ne čistimo activeFrontend ovdje, scheduleTimeout će to odraditi ako se ne vrati
+    socket.on("disconnect", () => {
+      // intentionally empty
     });
   });
 }
