@@ -19,6 +19,8 @@ function ordersSocket(io, database) {
     return `Orders/${year}/${month}/${day}`;
   }
 
+  let unsubscribeAdded = null; // 👈 OVO DODAŠ OVDJE
+
   function startListener() {
     const ordersPath = getTodayPath();
     const ordersRef = ref(database, ordersPath);
@@ -42,7 +44,7 @@ function ordersSocket(io, database) {
         ...newOrder,
       });
     });
-    
+
     // Promjena postojeće narudžbe
     // onChildChanged(ordersRef, (snapshot) => {
     //   const updatedOrder = snapshot.val();
