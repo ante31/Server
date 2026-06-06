@@ -20,15 +20,18 @@ function ordersSocket(io, database) {
   }
 
   function startListener() {
-    if (listener) listener.off?.();
-
     const ordersPath = getTodayPath();
     const ordersRef = ref(database, ordersPath);
 
-    console.log("Listener aktiviran na putanji:", ordersPath);
+    console.log("Listener aktiviran:", ordersPath);
 
-    // Nova narudžba
-    onChildAdded(ordersRef, (snapshot) => {
+    // 👇 UGASI STARO
+    if (unsubscribeAdded) {
+      unsubscribeAdded();
+    }
+
+    // 👇 NOVO
+    unsubscribeAdded = onChildAdded(ordersRef, (snapshot) => {
       const newOrder = snapshot.val();
       const orderId = snapshot.key;
 
@@ -39,7 +42,7 @@ function ordersSocket(io, database) {
         ...newOrder,
       });
     });
-
+    
     // Promjena postojeće narudžbe
     // onChildChanged(ordersRef, (snapshot) => {
     //   const updatedOrder = snapshot.val();
