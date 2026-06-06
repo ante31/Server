@@ -1,8 +1,8 @@
 const express = require('express');
-const { ref, get, push, set, update, runTransaction } = require('firebase/database');
+const { ref, get, push, set } = require('firebase/database');
 const database = require('../dbConnect');
-const { sendPushNotification } = require('../services/sendPushNotification');
-const { sendSMS } = require('../services/sendSMS');
+const { updateOrderStatus } = require('../services/updateOrderStatus');
+const { startAutoRejectTimer } = require('../services/autoRejectTimer');
 
 const orderRouter = express.Router();
 
@@ -36,6 +36,13 @@ orderRouter.post('/', async (req, res) => {
     const newOrderRef = push(reference);
     
     await set(newOrderRef, req.body);
+
+    startAutoRejectTimer(
+      newOrderRef.key,
+      year,
+      month,
+      day
+    );
 
     res.status(201).json({ id: newOrderRef.key });
   } catch (error) {
@@ -87,86 +94,20 @@ orderRouter.get('/:year/:month/:day', async (req, res) => {
   }
 });
 
-
-orderRouter.patch('/:orderId', async (req, res) => {
+orderRouter.patch("/:orderId", async (req, res) => {
   try {
-    const { orderId } = req.params;
-    const { status, year, month, day } = req.body; 
-    
-    console.log(`Updating order ${orderId} status to ${status}`);
-    console.log(year, month, day);
-    if (!status || (status !== 'accepted' && status !== 'rejected' && status !== 'completed')) {
-      return res.status(400).send('Invalid status. Please provide "accepted" or "rejected"');
-    }
+    await updateOrderStatus({
+      orderId: req.params.orderId,
+      status: req.body.status,
+      year: req.body.year,
+      month: req.body.month,
+      day: req.body.day,
+    });
 
-    const reference = ref(database, `Orders/${year}/${month}/${day}/${orderId}`);
-
-    const snapshot = await get(reference);
-    
-    if (!snapshot.exists()) {
-      return res.status(404).send('Order not found');
-    }
-
-    const orderData = snapshot.val();
-    const pushToken = orderData.token;
-    let phone = orderData.phone;
-    let price = orderData.totalPrice;
-
-    // 2. Ažuriranje loyalty-a
-    console.log('Ažuriranje loyalty bodova za telefon:', phone, 'sa cijenom:', price);
-    if (phone && price != null) {
-      const loyaltyRef = ref(database, `Loyalty/${phone}`);
-
-      const result = await runTransaction(loyaltyRef, (currentData) => {
-        let data = currentData || { loyalty_points: 0, awards: 0 };
-        
-        data.loyalty_points = (data.loyalty_points || 0) + price;
-        
-        data.awards = data.awards || 0; 
-        
-        return data;
-      });
-
-      if (result.committed) {
-        console.log(`Loyalty podaci za telefon ${phone} uspešno ažurirani. Novi bodovi: ${result.snapshot.val().points}`);
-      } else {
-        console.log('Transakcija loyalty bodova nije izvršena.');
-      }
-    }
-
-    // Konstruiranje poruke
-    let message = '';
-    const lang = orderData.language;
-    let title = "Gricko";
-    if (status === 'accepted') {
-      message = lang === 'hr' ? 'Vaša narudžba je prihvaćena': `Your order has been accepted.`;
-    } else if (status === 'rejected') {
-      message = lang === 'hr' ? 'Nažalost Vaša narudžba je odbijena': `Unfortunately your order has been rejected.`;
-    } else if (status === 'completed' && !orderData.isDelivery) {
-      message = lang === 'hr' ? 'Vaša narudžba je završena': `Your order has been completed.`;
-    }
-    if (message !== '') {
-    if (!pushToken) {
-      sendSMS(orderData.phone, "Gricko automatska poruka: "+message);
-    } else {
-      await sendPushNotification(pushToken, title, message);
-      console.log('Push notification sent to client');
-    }
-  }
-
-
-    // Update the status of the order in the database
-    await update(reference, { status });
-
-    res.status(200).send(`Order ${orderId} status updated to ${status}`);
-  } catch (error) {
-    console.error('Error updating order status:', error);
-    res.status(500).send('Failed to update order status');
+    res.status(200).send("OK");
+  } catch (err) {
+    res.status(500).send(err.message);
   }
 });
-
-// Zapamtite: I dalje morate implementirati logiku smanjenja bodova u POST /orders ruti (handleFinalSubmission)
-// ako klijent pošalje useAward: true.
-
 
 module.exports = orderRouter;

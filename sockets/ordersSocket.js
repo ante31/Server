@@ -1,7 +1,14 @@
-const { ref, onValue, onChildAdded, onChildChanged, get } = require('firebase/database');
+const { ref, onValue, onChildAdded, onChildChanged, get, set } = require('firebase/database');
 
 function ordersSocket(io, database) {
   let listener = null;
+  const deliveryTimeRef = ref(database, `Loyalty/deliveryTime`);
+  const pickUpTimeRef = ref(database, `Loyalty/pickUpTime`);
+
+  function resetDaily() {
+    set(deliveryTimeRef, 50);
+    set(pickUpTimeRef, 10);
+  }
 
   // Pomoćna funkcija za generiranje putanje na temelju današnjeg datuma
   function getTodayPath() {
@@ -13,44 +20,41 @@ function ordersSocket(io, database) {
   }
 
   function startListener() {
-    if (listener) listener.off?.(); 
+    if (listener) listener.off?.();
 
-    const ordersPath = getTodayPath(); // Koristimo funkciju ovdje
+    const ordersPath = getTodayPath();
     const ordersRef = ref(database, ordersPath);
 
-    console.log('📡 Listener aktiviran na putanji:', ordersPath);
+    console.log("Listener aktiviran na putanji:", ordersPath);
 
-    listener = onChildAdded(ordersRef, (snapshot) => {
+    // Nova narudžba
+    onChildAdded(ordersRef, (snapshot) => {
       const newOrder = snapshot.val();
       const orderId = snapshot.key;
-      console.log('Firebase - Nova narudžba:', orderId);
-      io.emit('order-added', { id: orderId, ...newOrder });
+
+      console.log("Firebase - Nova narudžba:", orderId);
+
+      io.emit("order-added", {
+        id: orderId,
+        ...newOrder,
+      });
     });
 
+    // Promjena postojeće narudžbe
     onChildChanged(ordersRef, (snapshot) => {
       const updatedOrder = snapshot.val();
       const orderId = snapshot.key;
-      if (updatedOrder.status) {
-        io.emit(`order-updated-${orderId}`, { id: orderId, ...updatedOrder });
-      }
+
+      console.log(
+        `Firebase - Narudžba ${orderId} promijenjena, status: ${updatedOrder.status}`
+      );
+
+      io.emit("order-updated", {
+        id: orderId,
+        ...updatedOrder,
+      });
     });
   }
-
-  // KADA SE KLIJENT SPOJI -> ODMAH MU POŠALJI SVE ZA DANAS
-  io.on('connection', (socket) => {
-    console.log('🔌 Klijent spojen, šaljem inicijalne narudžbe...');
-    
-    const ordersPath = getTodayPath(); // I ovdje koristimo funkciju
-    const currentOrdersRef = ref(database, ordersPath);
-
-    get(currentOrdersRef).then((snapshot) => {
-      if (snapshot.exists()) {
-        const orders = snapshot.val();
-        socket.emit('initial-orders', orders);
-        console.log(`📦 Poslano ${Object.keys(orders).length} narudžbi klijentu ${socket.id}`);
-      }
-    }).catch(err => console.error("Greška pri sinkronizaciji:", err));
-  });
 
   startListener();
 
@@ -66,10 +70,12 @@ function ordersSocket(io, database) {
 
   setTimeout(() => {
     console.log('Prvi refresh u 03:00');
+    resetDaily();
     startListener();
 
     setInterval(() => {
       console.log('Refresha se orders socket');
+      resetDaily();
       startListener();
     }, 1000 * 60 * 60 * 24);
   }, msUntilNextRefresh);

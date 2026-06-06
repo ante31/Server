@@ -28,6 +28,7 @@ loyaltyRouter.get('/:phone', async (req, res) => {
     res.status(500).send('Failed to fetch loyalty data');
   }
 });
+
 // POST /loyalty/:phone/create-coupon
 loyaltyRouter.post("/:phone/create-coupon", async (req, res) => {
   try {
@@ -56,6 +57,7 @@ loyaltyRouter.post("/:phone/create-coupon", async (req, res) => {
     const THRESHOLD = thresholdSnap.exists() ? thresholdSnap.val() : 500;
 
     if (points < THRESHOLD) {
+      console.log(`Not enough points: ${points} (threshold: ${THRESHOLD})`);
       return res.status(400).json({
         error: "Not enough loyalty points",
         points,
@@ -69,7 +71,7 @@ loyaltyRouter.post("/:phone/create-coupon", async (req, res) => {
     const coupon = {
       value: 10,           // trenutno fiksno 10€
       isUsed: false,
-      createdAt: Date.now(),
+      createdAt: new Date().toISOString(),
     };
 
     await set(couponRef, coupon);
@@ -93,8 +95,37 @@ loyaltyRouter.post("/:phone/create-coupon", async (req, res) => {
   }
 });
 
-// routes/loyaltyRouter.js
+loyaltyRouter.patch('/:phone/coupons/:couponId', async (req, res) => {
+  try {
+    const { phone, couponId } = req.params;
+    const { isUsed, usedAt } = req.body; 
 
+    console.log(req.body);
+
+    console.log(`Updating coupon ${couponId} for user ${phone} to isUsed: ${isUsed} on ${usedAt}`);
+
+    const reference = ref(database, `Loyalty/${phone}/coupons/${couponId}`);
+
+    const snapshot = await get(reference);
+    
+    if (!snapshot.exists()) {
+      return res.status(404).send('Coupon not found');
+    }
+
+    // Ažuriranje polja isUsed i dodavanje timestampa
+    await update(reference, { 
+      isUsed: isUsed,
+      usedAt: usedAt || Date.now() 
+    });
+
+    res.status(200).send(`Coupon ${couponId} successfully updated.`);
+  } catch (error) {
+    console.error('Error updating coupon status:', error);
+    res.status(500).send('Failed to update coupon status');
+  }
+});
+
+// routes/loyaltyRouter.js
 loyaltyRouter.get("/:phone/coupons", async (req, res) => {
   try {
     const { phone } = req.params;

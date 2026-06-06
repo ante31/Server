@@ -1,6 +1,6 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
-const { ref, get, update, remove, set } = require('firebase/database');
+const { ref, get } = require('firebase/database');
 const database = require('../dbConnect'); // Ensure this connects to your Firebase Realtime Database
 
 const authRouter = express.Router();
@@ -23,7 +23,7 @@ authRouter.post('/login/:pass', async (req, res) => {
       // 2. Provjera za običnog korisnika
       if (storedPass && bcrypt.compareSync(pass, storedPass)) {
         console.log('User login successful');
-        return res.status(200).json({ message: 'Login successful', role: 'user' });
+        return res.status(200).json({ message: 'Login successful', role: 'restaurant' });
       }
 
       res.status(401).json({ error: 'Incorrect password' });

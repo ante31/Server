@@ -31,22 +31,24 @@ const http = require('http');
 const server = http.createServer(app);
 
 const { Server } = require('socket.io');
-const io = new Server(server, {
-  cors: {
-    origin: '*',
-    methods: ['GET', 'POST'],
-  },
-  transports: ['websocket'],
-});
-
-// Middleware
-app.use(bodyParser.json());
-app.use(express.json());
+// 2. Popravi Socket.io CORS
 app.use(cors({
   origin: '*',
   methods: 'GET,POST,PUT,DELETE,PATCH',
   allowedHeaders: 'Content-Type,Authorization',
 }));
+const io = new Server(server, {
+  cors: {
+    origin: true, // Isto i ovdje!
+    methods: ['GET', 'POST'],
+    credentials: true
+  },
+  transports: ['polling', 'websocket']
+});
+
+// Middleware
+app.use(bodyParser.json());
+app.use(express.json());
 
 // Test ruta
 app.get('/', (req, res) => {
