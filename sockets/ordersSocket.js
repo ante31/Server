@@ -22,6 +22,7 @@ function ordersSocket(io, database) {
   let unsubscribeAdded = null; // 👈 OVO DODAŠ OVDJE
 
   function startListener() {
+    console.log("INSTANCE ID:", process.pid);
     const ordersPath = getTodayPath();
     const ordersRef = ref(database, ordersPath);
 
