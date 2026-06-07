@@ -55,6 +55,13 @@ orderRouter.post('/', async (req, res) => {
     const newOrderRef = push(reference);
     await set(newOrderRef, req.body);
 
+    startAutoRejectTimer(
+      newOrderRef.key,
+      year,
+      month,
+      day
+    );
+
     // 3. Slanje odgovora natrag klijentu
     res.status(201).set({
       'Content-Type': 'application/json',
