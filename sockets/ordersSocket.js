@@ -46,20 +46,19 @@ function ordersSocket(io, database) {
       });
     });
 
-    // Promjena postojeće narudžbe
-    // onChildChanged(ordersRef, (snapshot) => {
-    //   const updatedOrder = snapshot.val();
-    //   const orderId = snapshot.key;
+    onChildChanged(ordersRef, (snapshot) => {
+      const updatedOrder = snapshot.val();
+      const orderId = snapshot.key;
 
-    //   console.log(
-    //     `Firebase - Narudžba ${orderId} promijenjena, status: ${updatedOrder.status}`
-    //   );
+      console.log(
+        `Firebase - Narudžba ${orderId} promijenjena, status: ${updatedOrder.status}`
+      );
 
-    //   io.emit("order-updated", {
-    //     id: orderId,
-    //     ...updatedOrder,
-    //   });
-    // });
+      io.emit("order-updated", {
+        id: orderId,
+        ...updatedOrder,
+      });
+    });
   }
 
   startListener();
