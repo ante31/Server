@@ -10,7 +10,6 @@ generalRouter.get('/', async (req, res) => {
     const snapshot = await get(reference);
 
     if (snapshot.exists()) {
-      console.log('General data fetched:', snapshot.val());
       res.json(snapshot.val());
     } else {
       res.status(404).send('No general available in Firebase');
