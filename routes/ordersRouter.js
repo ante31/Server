@@ -24,33 +24,51 @@ orderRouter.get('/', async (req, res) => {
 
 orderRouter.post('/', async (req, res) => {
   try {    
-    // Extract and format date from time
-    const time = new Date(req.body.time);
-    time.setMinutes(time.getMinutes() + time.getTimezoneOffset()); // Convert UTC to local
+    console.log("NEW ORDER INCOMING");
+    
+    const { idempotencyKey, time: orderTime } = req.body;
+    console.log("idempotencyKey:", idempotencyKey);
+    const time = new Date(orderTime);
+    time.setMinutes(time.getMinutes() + time.getTimezoneOffset()); 
     const year = time.getFullYear();
     const month = String(time.getMonth() + 1).padStart(2, '0');
     const day = String(time.getDate()).padStart(2, '0');
 
-    // Reference the order location in the database
     const reference = ref(database, `Orders/${year}/${month}/${day}`);
+
+    // 1. ZAŠTITA OD DUPLANJA: Ako postoji ključ, provjeri bazu za taj dan
+    if (idempotencyKey) {
+      const duplikatQuery = query(reference, orderByChild('idempotencyKey'), equalTo(idempotencyKey));
+      const snapshot = await get(duplikatQuery);
+      
+      if (snapshot.exists()) {
+        const postojeceNarudzbe = snapshot.val();
+        const postojeciId = Object.keys(postojeceNarudzbe)[0];
+        console.log(`Pronađena postojeća narudžba za ključ ${idempotencyKey}. Vraćam stari ID: ${postojeciId}`);
+        
+        res.status(200).set({ 'Content-Type': 'application/json' });
+        return res.send(JSON.stringify({ id: postojeciId }));
+      }
+    }
+
+    // 2. Ako ne postoji, generiraj novu narudžbu
     const newOrderRef = push(reference);
-    
     await set(newOrderRef, req.body);
 
-    startAutoRejectTimer(
-      newOrderRef.key,
-      year,
-      month,
-      day
-    );
+    // 3. Slanje odgovora natrag klijentu
+    res.status(201).set({
+      'Content-Type': 'application/json',
+      'Connection': 'close' // 'close' je sigurniji za mobilni prvi zahtjev jer odmah javlja mobitelu da je gotovo
+    });
+    return res.send(JSON.stringify({ id: newOrderRef.key }));
 
-    res.status(201).json({ id: newOrderRef.key });
   } catch (error) {
     console.error('Error creating order:', error);
-    res.status(500).send('Failed to create order');
+    if (!res.headersSent) {
+      return res.status(500).send('Failed to create order');
+    }
   }
 });
-
 
 orderRouter.get('/:year/:month/:day/:orderId', async (req, res) => {
   try {
