@@ -23,49 +23,95 @@ orderRouter.get('/', async (req, res) => {
 });
 
 orderRouter.post('/', async (req, res) => {
-  try {    
-    console.log("NEW ORDER INCOMING");
-    
-    const { idempotencyKey, time: orderTime } = req.body;
-    console.log("idempotencyKey:", idempotencyKey);
+  try {
+    const { idempotencyKey, time: orderTime, phone, totalPrice } = req.body;
+
     const time = new Date(orderTime);
-    time.setMinutes(time.getMinutes() + time.getTimezoneOffset()); 
+    time.setMinutes(time.getMinutes() + time.getTimezoneOffset());
+
     const year = time.getFullYear();
     const month = String(time.getMonth() + 1).padStart(2, '0');
     const day = String(time.getDate()).padStart(2, '0');
 
     const reference = ref(database, `Orders/${year}/${month}/${day}`);
 
-    // 1. ZAŠTITA OD DUPLANJA: Ako postoji ključ, provjeri bazu za taj dan
+    // 🔒 1. IDEMPOTENCY CHECK (no DB write, only read)
     if (idempotencyKey) {
-      const duplikatQuery = query(reference, orderByChild('idempotencyKey'), equalTo(idempotencyKey));
-      const snapshot = await get(duplikatQuery);
-      
+      const existingQuery = query(
+        reference,
+        orderByChild('idempotencyKey'),
+        equalTo(idempotencyKey)
+      );
+
+      const snapshot = await get(existingQuery);
+
       if (snapshot.exists()) {
-        const postojeceNarudzbe = snapshot.val();
-        const postojeciId = Object.keys(postojeceNarudzbe)[0];
-        console.log(`Pronađena postojeća narudžba za ključ ${idempotencyKey}. Vraćam stari ID: ${postojeciId}`);
-        
-        res.status(200).set({ 'Content-Type': 'application/json' });
-        return res.send(JSON.stringify({ id: postojeciId }));
+        const data = snapshot.val();
+        const existingId = Object.keys(data)[0];
+
+        console.log(`♻️ Duplicate blocked (idempotency): ${idempotencyKey}`);
+
+        return res.status(200).json({
+          id: existingId,
+          duplicate: true
+        });
       }
     }
 
-    // 2. Ako ne postoji, generiraj novu narudžbu
+    // 🔒 2. FALLBACK SAFETY (OLD APP SUPPORT)
+    // koristi "fingerprint": phone + time + totalPrice
+    const fallbackQuery = query(
+      reference,
+      orderByChild('phone'),
+      equalTo(phone)
+    );
+
+    const snapshot = await get(fallbackQuery);
+
+    if (snapshot.exists()) {
+      const orders = snapshot.val();
+
+      for (const key of Object.keys(orders)) {
+        const o = orders[key];
+
+        const sameTime = o.time === orderTime;
+        const samePrice = Number(o.totalPrice) === Number(totalPrice);
+
+        if (sameTime && samePrice) {
+          console.log(`⚠️ Duplicate blocked (fallback fingerprint)`);
+
+          return res.status(200).json({
+            id: key,
+            duplicate: true
+          });
+        }
+      }
+    }
+
+    // 🟢 3. CREATE ORDER
     const newOrderRef = push(reference);
-    await set(newOrderRef, req.body);
 
-    
+    const payload = {
+      ...req.body,
+      createdAt: Date.now()
+    };
 
-    // 3. Slanje odgovora natrag klijentu
-    res.status(201).set({
-      'Content-Type': 'application/json',
-      'Connection': 'close' // 'close' je sigurniji za mobilni prvi zahtjev jer odmah javlja mobitelu da je gotovo
+    await set(newOrderRef, payload);
+
+    // startAutoRejectTimer(
+    //   newOrderRef.key,
+    //   year,
+    //   month,
+    //   day
+    // );
+
+    return res.status(201).json({
+      id: newOrderRef.key
     });
-    return res.send(JSON.stringify({ id: newOrderRef.key }));
 
   } catch (error) {
-    console.error('Error creating order:', error);
+    console.error('❌ Order error:', error);
+
     if (!res.headersSent) {
       return res.status(500).send('Failed to create order');
     }
