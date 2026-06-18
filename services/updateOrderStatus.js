@@ -88,7 +88,7 @@ const updateOrderStatus = async ({
 
     if (status === 'accepted') {
       message = lang === 'hr'
-        ? 'Vaša narudžba je prihvaćena'
+        ? 'Vaša narudžba je zaprimljena'
         : 'Your order has been accepted.';
     }
 
