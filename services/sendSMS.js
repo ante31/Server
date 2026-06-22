@@ -6,15 +6,19 @@ const DEVICE_ID = '68c91767c27bd0d0b9680bd5';
 const API_KEY_2 = 'f5205634-0d63-41fd-bf1a-8930e9b32ff5';
 const DEVICE_ID_2 = '689c5fe527e637fe5940b3e6';
 
+//novi acc i moj mob
+const API_KEY_3 = '00e46d5e-855e-4675-9110-9b7d64da3e93';
+const DEVICE_ID_3 = '6a38e67177015dcde18e90f5';
+
 const BASE_URL = 'https://api.textbee.dev/api/v1';
 
 async function sendSMS(to, message) {
   try {
-    const response = await fetch(`${BASE_URL}/gateway/devices/${DEVICE_ID_2}/send-sms`, {
+    const response = await fetch(`${BASE_URL}/gateway/devices/${DEVICE_ID_3}/send-sms`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-api-key': API_KEY_2,
+        'x-api-key': API_KEY_3,
       },
       body: JSON.stringify({
         recipients: [formatPhoneNumber(to)],
@@ -49,7 +53,7 @@ function formatPhoneNumber(rawNumber) {
   throw new Error('Neispravan broj: očekivan +, 00, ili lokalni broj s 0.');
 }
 
-// Primjer
-//sendSMS('0958138612', 'Vaša narudžba je prihvaćena!');
+
+sendSMS('0958138612', 'Vaša narudžba je prihvaćena!');
 
 module.exports = { sendSMS };
