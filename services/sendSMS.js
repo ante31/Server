@@ -54,6 +54,6 @@ function formatPhoneNumber(rawNumber) {
 }
 
 
-sendSMS('0958138612', 'Vaša narudžba je prihvaćena!');
+//sendSMS('0958138612', 'Vaša narudžba je prihvaćena!');
 
 module.exports = { sendSMS };
