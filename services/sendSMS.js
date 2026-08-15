@@ -10,15 +10,20 @@ const DEVICE_ID_2 = '689c5fe527e637fe5940b3e6';
 const API_KEY_3 = '00e46d5e-855e-4675-9110-9b7d64da3e93';
 const DEVICE_ID_3 = '6a38e67177015dcde18e90f5';
 
+//Tatin mob
+const API_KEY_4 = 'txb_MH2BFmXiyR3PvHUtXDgUod3jtP5FNbHV';
+const DEVICE_ID_4 = '6a8065283005599046baac1a';
+
+
 const BASE_URL = 'https://api.textbee.dev/api/v1';
 
 async function sendSMS(to, message) {
   try {
-    const response = await fetch(`${BASE_URL}/gateway/devices/${DEVICE_ID_3}/send-sms`, {
+    const response = await fetch(`${BASE_URL}/gateway/devices/${DEVICE_ID_4}/send-sms`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-api-key': API_KEY_3,
+        'x-api-key': API_KEY_4,
       },
       body: JSON.stringify({
         recipients: [formatPhoneNumber(to)],
