@@ -105,7 +105,7 @@ orderRouter.post('/', async (req, res) => {
     //   day
     // );
 
-    //startSmsAlertTimer(newOrderRef.key, year, month, day);
+    startSmsAlertTimer(newOrderRef.key, year, month, day);
 
     return res.status(201).json({
       id: newOrderRef.key
