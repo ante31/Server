@@ -92,6 +92,9 @@ const startSmsAlertTimer = async (orderId, year, month, day) => {
         console.log(`Sending SMS alert for pending order ${orderId}`);
         await sendSMS(ALERT_PHONE, ALERT_MESSAGE);
       }
+      else {
+        console.log(`Not sending SMS alert for order ${orderId} as it is not pending`);
+      }
     } catch (err) {
       console.error("SMS alert error:", err);
     }
