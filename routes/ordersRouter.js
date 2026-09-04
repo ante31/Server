@@ -2,7 +2,7 @@ const express = require('express');
 const { ref, get, push, set, query, orderByChild, equalTo } = require('firebase/database');
 const database = require('../dbConnect');
 const { updateOrderStatus } = require('../services/updateOrderStatus');
-const { startAutoRejectTimer } = require('../services/autoRejectTimer');
+const { startSmsAlertTimer } = require('../services/startSmsAlertTimer');
 
 const orderRouter = express.Router();
 
