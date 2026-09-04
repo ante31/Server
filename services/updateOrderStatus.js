@@ -124,8 +124,10 @@ const updateOrderStatus = async ({
 
     if (message) {
       if (!pushToken) {
+        console.log("No push token available, sending SMS instead.");
         sendSMS(orderData.phone, "Gricko automatska poruka: " + message);
       } else {
+        console.log("Sending push notification to token:", pushToken);
         await sendPushNotification(pushToken, title, message);
       }
     }
