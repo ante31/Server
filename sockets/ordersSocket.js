@@ -54,7 +54,14 @@ function ordersSocket(io, database) {
         `Firebase - Narudžba ${orderId} promijenjena, status: ${updatedOrder.status}`
       );
 
+      // Generički event za order manager (React-order-manager/client)
       io.emit("order-updated", {
+        id: orderId,
+        ...updatedOrder,
+      });
+
+      // Specifični event za ThankYouScreen u mobilnoj appi
+      io.emit(`order-updated-${orderId}`, {
         id: orderId,
         ...updatedOrder,
       });

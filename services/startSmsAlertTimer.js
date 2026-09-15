@@ -66,19 +66,7 @@ const startSmsAlertTimer = async (orderId, year, month, day) => {
   // Ako je naručeno prije otvaranja (narudžba unaprijed), počni brojati od otvaranja.
   const countStart = Math.max(now, openMs);
 
-  // Ako je već nakon zatvaranja, preskoči alert.
-  if (countStart > closeMs) {
-    console.log(`SMS alert skipped for order ${orderId}: izvan radnog vremena`);
-    return;
-  }
-
   const fireAt = countStart + SMS_ALERT_TIME;
-
-  // Ako bi rok pao nakon zatvaranja, preskoči alert.
-  if (fireAt > closeMs) {
-    console.log(`SMS alert skipped for order ${orderId}: rok pada nakon zatvaranja`);
-    return;
-  }
 
   const delay = fireAt - now; // može biti veći od 4 min ako je narudžba unaprijed
 
@@ -90,7 +78,7 @@ const startSmsAlertTimer = async (orderId, year, month, day) => {
 
       if (order.status === "pending") {
         console.log(`Sending SMS alert for pending order ${orderId}`);
-        await sendSMS(ALERT_PHONE, ALERT_MESSAGE);
+        //await sendSMS(ALERT_PHONE, ALERT_MESSAGE);
       }
       else {
         console.log(`Not sending SMS alert for order ${orderId} as it is not pending`);
