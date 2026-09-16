@@ -124,8 +124,15 @@ const updateOrderStatus = async ({
 
     if (message) {
       if (!pushToken) {
-        console.log("No push token available, NOT sending SMS instead.");
-        // sendSMS(orderData.phone, "Gricko automatska poruka: " + message);
+        // Stare verzije aplikacije (< 1.1.9) nemaju ispravan version check pa šaljemo SMS
+        const version = orderData.version;
+        const isOldVersion = !version; // stare verzije ne šalju version polje uopće
+        if (isOldVersion) {
+          console.log("Old app version (no version field), sending SMS instead of push.");
+          sendSMS(orderData.phone, "Gricko automatska poruka: " + message);
+        } else {
+          console.log("No push token available, NOT sending SMS (new version, push should work).");
+        }
       } else {
         console.log("Sending push notification to token:", pushToken);
         await sendPushNotification(pushToken, title, message);
