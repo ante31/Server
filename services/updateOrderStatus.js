@@ -124,14 +124,25 @@ const updateOrderStatus = async ({
 
     if (message) {
       if (!pushToken) {
-        // Stare verzije aplikacije (< 1.1.9) nemaju ispravan version check pa šaljemo SMS
+        // Određujemo je li stara verzija aplikacije koja ne može primiti push notifikacije.
+        // Minimalne verzije koje imaju ispravni push mehanizam:
+        //   Android: 1.1.9
+        //   iOS:     1.2.3
+        // Budući da ne šaljemo platform info u payloadu, provjeravamo obje opcije:
+        // verzija je "stara" ako je ispod minimuma za Android ILI ispod minimuma za iOS.
         const version = orderData.version;
-        const isOldVersion = !version; // stare verzije ne šalju version polje uopće
+        const semver = require('semver');
+
+        const isOldVersion = !version
+          || !semver.coerce(version)
+          || semver.lt(semver.coerce(version), '1.1.9') // Android minimum
+          || semver.lt(semver.coerce(version), '1.2.3'); // iOS minimum
+
         if (isOldVersion) {
-          console.log("Old app version (no version field), sending SMS instead of push.");
+          console.log(`Old app version (${version || 'none'}), sending SMS instead of push.`);
           sendSMS(orderData.phone, "Gricko automatska poruka: " + message);
         } else {
-          console.log("No push token available, NOT sending SMS (new version, push should work).");
+          console.log(`No push token available, NOT sending SMS (version ${version} is new enough).`);
         }
       } else {
         console.log("Sending push notification to token:", pushToken);
